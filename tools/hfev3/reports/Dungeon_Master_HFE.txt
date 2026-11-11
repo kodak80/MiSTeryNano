@@ -1,0 +1,19 @@
+==== Dungeon_Master_HFE.hfe
+HFE v1, 82 tracks, 2 sides, 250 kbps, encoding 0, interface 2
+Sides listed only when unusual (-v lists all). Sector flags: /size, @T.S ID differs from
+the physical track, !id ID CRC bad, !dat data CRC bad, - no data field, del deleted mark,
+W weak (reads differently each pass), ~pct data rate vs 250kbps, ^ ID inside another
+sector's data, * duplicate number.
+
+T00.0 200.35ms 100176 cells x72-72 12522B ops    0 | 1 2 3 4 5 6 7!dat 247 9 10
+
+Summary for Dungeon_Master_HFE.hfe
+  buffer: largest side stream 12584 bytes, largest revolution 100672 cells
+  rotation: 200.06 - 201.34 ms per revolution (200 ms nominal), 0 long sides
+  cell size: x=72 - 72 (72 = 2.00us), 0 sides with density changes, max 0 opcodes/side
+  DPLL increment range: 124 - 130 (128 nominal, limits 117-140)
+  weak bits: 0 cells on 0 sides, 0 sectors read differently each time
+  sectors: 0 ID CRC errors, 1 data CRC errors, 0 without data, 0 deleted, 0 odd size,
+           0 wrong track/side in ID, 1 odd sector numbers, 0 duplicates, 0 nested IDs
+  other: 0 sides with index marks, 84 unformatted sides, 0 formatted sides beyond track 79
+

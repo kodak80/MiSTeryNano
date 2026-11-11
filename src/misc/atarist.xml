@@ -49,7 +49,7 @@
   </actions>
   
   <menu label="MiSTeryNano">
-    <fileselector label="Disk A:" ext="st" index="0"/>
+    <fileselector label="Disk A:" ext="st;hfe" index="0"/>
     <menu label="System">
       <list label="Chipset:" id="C" default="0" action="cold_reset">
 	<listentry label="ST" value="0"/>
@@ -80,7 +80,7 @@
       <button label="Cold Boot" action="cold_reset_hide"/>
     </menu>
     <menu label="Storage">
-      <fileselector label="Disk A:" ext="st" index="0" default="disk_a.st"/>
+      <fileselector label="Disk A:" ext="st;hfe" index="0" default="disk_a.st"/>
       <fileselector label="Disk B:" ext="st" index="1" default="disk_b.st"/>
       <fileselector label="ACSI #0:" ext="hd;img" index="2" default="acsi_0.hd"/>
       <fileselector label="ACSI #1:" ext="hd;img" index="3" default="acsi_1.hd"/>

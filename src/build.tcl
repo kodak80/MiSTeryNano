@@ -16,6 +16,11 @@ add_file atarist/cubase2_dongle.v
 add_file atarist/cubase3_dongle.v
 add_file fdc1772/fdc1772.v
 add_file fdc1772/floppy.v
+add_file fdc_hfe/hfe_floppy.v
+add_file fdc_hfe/hfe_player.v
+add_file fdc_hfe/wd1772_dpll.v
+add_file fdc_hfe/mfm_amdetect.v
+add_file fdc_hfe/wd1772_mfm.v
 add_file fx68k/fx68k.sv
 add_file fx68k/fx68kAlu.sv
 add_file fx68k/uaddrPla.sv

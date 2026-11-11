@@ -18,6 +18,8 @@ ATARIST_FILES= mfp.v mfp_hbit16.v  mfp_srff16.v mfp_timer.v io_fifo.v acia.v stB
 
 FDC_DIR=../../src/fdc1772
 FDC_FILES= fdc1772.v floppy.v
+HFE_DIR=../../src/fdc_hfe
+HFE_FILES= hfe_floppy.v hfe_player.v wd1772_dpll.v mfm_amdetect.v wd1772_mfm.v
 
 MISC_DIR=../../src/misc
 MISC_FILES= video_analyzer.v scandoubler.v
@@ -31,7 +33,7 @@ IKBD_FILES= ikbd.sv hd63701/HD63701_ALU.v hd63701/HD63701_CORE.v hd63701/HD63701
 VERILATOR_DIR=/usr/local/share/verilator/include
 VERILATOR_FILES=verilated.cpp verilated_vcd_c.cpp verilated_threads.cpp
 
-HDL_FILES = $(GSTMCU_FILES:%=$(GSTMCU_DIR)/%) $(FX68K_FILES:%=$(FX68K_DIR)/%) $(ATARIST_FILES:%=$(ATARIST_DIR)/%) $(FDC_FILES:%=$(FDC_DIR)/%) $(IKBD_FILES:%=$(IKBD_DIR)/%) $(JT49_FILES:%=$(JT49_DIR)/%) $(MISC_FILES:%=$(MISC_DIR)/%) atarist_tb.v
+HDL_FILES = $(GSTMCU_FILES:%=$(GSTMCU_DIR)/%) $(FX68K_FILES:%=$(FX68K_DIR)/%) $(ATARIST_FILES:%=$(ATARIST_DIR)/%) $(FDC_FILES:%=$(FDC_DIR)/%) $(HFE_FILES:%=$(HFE_DIR)/%) $(IKBD_FILES:%=$(IKBD_DIR)/%) $(JT49_FILES:%=$(JT49_DIR)/%) $(MISC_FILES:%=$(MISC_DIR)/%) atarist_tb.v
 
 EXTRA_CFLAGS = `sdl2-config --cflags` -DVIDEO
 EXTRA_LDFLAGS = `sdl2-config --libs` -lSDL2_image

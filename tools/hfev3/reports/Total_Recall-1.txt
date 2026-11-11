@@ -1,0 +1,76 @@
+==== Total_Recall-1.hfe
+HFE v3, 84 tracks, 2 sides, 251 kbps, encoding 0, interface 7
+Sides listed only when unusual (-v lists all). Sector flags: /size, @T.S ID differs from
+the physical track, !id ID CRC bad, !dat data CRC bad, - no data field, del deleted mark,
+W weak (reads differently each pass), ~pct data rate vs 250kbps, ^ ID inside another
+sector's data, * duplicate number.
+
+T00.0 199.89ms  99787 cells x71-76 15810B ops 1694 | 1 2 3 4 5 6!dat~96% 7 8 9 10
+T02.1 199.88ms 100193 cells x71-73 15403B ops 1441 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T07.1 199.89ms 100191 cells x71-73 15114B ops 1297 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T12.0 199.88ms 100188 cells x71-73 15360B ops 1420 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T13.0 199.89ms 100190 cells x71-73 15751B ops 1616 | 5 6 7 8 9 10 1 2 3 4  weakcells 8
+T14.0 199.88ms 100193 cells x71-73 15170B ops 1324 | 3 4 5 6 7 8 9 10 1 2  weakcells 8
+T14.1 199.89ms 100194 cells x71-73 15170B ops 1325 | 3 4 5 6 7 8 9 10 1 2  weakcells 16
+T15.0 199.90ms 100192 cells x71-73 15064B ops 1274 | 1 2 3 4 5 6 7 8 9 10  weakcells 16
+T17.0 199.89ms 100189 cells x71-73 15039B ops 1259 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T22.0 199.88ms 100189 cells x71-73 15086B ops 1283 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T26.1 199.88ms 100191 cells x71-73 15009B ops 1244 | 9 10 1 2 3 4 5 6 7 8  weakcells 8
+T30.1 199.88ms 100190 cells x71-73 15051B ops 1265 | 1 2 3 4 5 6 7 8 9 10  weakcells 8
+T34.0 199.88ms 100189 cells x71-73 15061B ops 1271 | 3 4 5 6 7 8 9 10 1 2  weakcells 16
+T35.1 199.88ms 100192 cells x71-73 15041B ops 1260 | 1 2 3 4 5 6 7 8 9 10  weakcells 8
+T37.1 199.88ms 100187 cells x71-73 15105B ops 1293 | 7 8 9 10 1 2 3 4 5 6  weakcells 16
+T40.0 199.88ms 100193 cells x71-73 15720B ops 1599 | 1 2 3 4 5 6 7 8 9 10  weakcells 8
+T42.0 199.87ms 100193 cells x71-73 15754B ops 1616 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T43.1 199.89ms 100192 cells x71-73 14974B ops 1228 | 5 6 7 8 9 10 1 2 3 4  weakcells 8
+T46.1 199.89ms 100191 cells x71-74 15101B ops 1289 | 9 10 1 2 3 4 5 6 7 8
+T47.0 199.88ms 100187 cells x71-74 15065B ops 1271 | 7 8 9 10 1 2 3 4 5 6
+T47.1 199.89ms 100191 cells x71-73 15065B ops 1272 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T49.0 199.89ms 100190 cells x71-74 15065B ops 1271 | 3 4 5 6 7 8 9 10 1 2
+T49.1 199.89ms 100191 cells x71-74 15065B ops 1271 | 3 4 5 6 7 8 9 10 1 2
+T50.0 199.88ms 100193 cells x70-74 15408B ops 1442 | 1 2 3 4 5 6 7 8 9 10
+T50.1 199.89ms 100190 cells x70-74 15408B ops 1443 | 1 2 3 4 5 6 7 8 9 10
+T51.0 199.89ms 100184 cells x70-74 15075B ops 1278 | 9 10 1 2 3 4 5 6 7 8
+T51.1 199.88ms 100187 cells x70-74 15075B ops 1277 | 9 10 1 2 3 4 5 6 7 8  weakcells 8
+T52.0 199.88ms 100189 cells x70-74 15049B ops 1263 | 7 8 9 10 1 2 3 4 5 6
+T52.1 199.89ms 100190 cells x70-74 15049B ops 1264 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T53.0 199.88ms 100189 cells x70-74 15185B ops 1333 | 5 6 7 8 9 10 1 2 3 4  weakcells 16
+T53.1 199.89ms 100190 cells x70-74 15185B ops 1331 | 5 6 7 8 9 10 1 2 3 4
+T54.0 199.88ms 100193 cells x70-74 15002B ops 1239 | 3 4 5 6 7 8 9 10 1 2
+T54.1 199.89ms 100190 cells x70-74 15002B ops 1240 | 3 4 5 6 7 8 9 10 1 2
+T55.0 199.89ms 100191 cells x71-74 15091B ops 1284 | 1 2 3 4 5 6 7 8 9 10
+T57.0 199.89ms 100188 cells x71-74 15087B ops 1282 | 7 8 9 10 1 2 3 4 5 6
+T57.1 199.89ms 100190 cells x71-74 15087B ops 1283 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T58.0 199.89ms 100190 cells x70-74 15085B ops 1281 | 5 6 7 8 9 10 1 2 3 4
+T58.1 199.88ms 100189 cells x70-73 15085B ops 1281 | 5 6 7 8 9 10 1 2 3 4
+T61.0 199.89ms 100191 cells x71-73 15069B ops 1274 | 9 10 1 2 3 4 5 6 7 8  weakcells 8
+T62.0 199.89ms 100190 cells x71-73 15009B ops 1244 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T62.1 199.89ms 100191 cells x71-73 15009B ops 1244 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T64.0 199.88ms 100189 cells x71-73 15120B ops 1300 | 3 4 5 6 7 8 9 10 1 2  weakcells 8
+T66.1 199.88ms 100193 cells x71-73 15102B ops 1290 | 9 10 1 2 3 4 5 6 7 8  weakcells 8
+T67.0 199.88ms 100189 cells x71-73 15109B ops 1294 | 7 8 9 10 1 2 3 4 5 6  weakcells 8
+T68.1 199.89ms 100191 cells x71-73 15143B ops 1311 | 5 6 7 8 9 10 1 2 3 4  weakcells 8
+T69.1 199.89ms 100191 cells x71-73 15075B ops 1277 | 3 4 5 6 7 8 9 10 1 2  weakcells 8
+T75.0 199.88ms 100189 cells x71-73 15054B ops 1267 | 1 2 3 4 5 6 7 8 9 10  weakcells 8
+T75.1 199.89ms 100192 cells x71-73 15054B ops 1268 | 1 2 3 4 5 6 7 8 9 10  weakcells 8
+T76.0 199.89ms 100190 cells x71-73 16022B ops 1751 | 9 10 1 2 3 4 5 6 7 8  weakcells 8
+T78.0 199.89ms 100190 cells x71-73 15083B ops 1281 | 5 6 7 8 9 10 1 2 3 4  weakcells 8
+T80.0 199.93ms 121024 cells x54-65 20080B ops11064 |   weakcells 68344  (no sectors)
+T80.1 199.93ms 120563 cells x54-72 20080B ops10006 |   weakcells 59432  (no sectors)
+T81.0 199.92ms 121169 cells x51-72 20145B ops 8412 |   weakcells 46840  (no sectors)
+T81.1 199.93ms 120557 cells x54-72 20145B ops 7174 |   weakcells 36320  (no sectors)
+T82.0 199.92ms 120819 cells x54-72 20115B ops 8591 |   weakcells 47992  (no sectors)
+T82.1 199.90ms 121214 cells x52-72 20115B ops 7218 |   weakcells 37400  (no sectors)
+T83.0 199.91ms 121014 cells x53-72 20149B ops 8544 |   weakcells 47488  (no sectors)
+T83.1 199.89ms 121569 cells x50-72 20149B ops 7377 |   weakcells 38712  (no sectors)
+
+Summary for Total_Recall-1.hfe
+  buffer: largest side stream 20149 bytes, largest revolution 121569 cells
+  rotation: 199.87 - 199.93 ms per revolution (200 ms nominal), 0 long sides
+  cell size: x=50 - 76 (72 = 2.00us), 28 sides with density changes, max 11064 opcodes/side
+  DPLL increment range: 117 - 140 (128 nominal, limits 117-140)
+  weak bits: 382840 cells on 42 sides, 0 sectors read differently each time
+  sectors: 0 ID CRC errors, 1 data CRC errors, 0 without data, 0 deleted, 0 odd size,
+           0 wrong track/side in ID, 0 odd sector numbers, 0 duplicates, 0 nested IDs
+  other: 0 sides with index marks, 8 unformatted sides, 0 formatted sides beyond track 79
+

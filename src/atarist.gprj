@@ -21,6 +21,11 @@
         <File path="atarist/cubase3_dongle.v" type="file.verilog" enable="1"/>
         <File path="fdc1772/fdc1772.v" type="file.verilog" enable="1"/>
         <File path="fdc1772/floppy.v" type="file.verilog" enable="1"/>
+        <File path="fdc_hfe/hfe_floppy.v" type="file.verilog" enable="1"/>
+        <File path="fdc_hfe/hfe_player.v" type="file.verilog" enable="1"/>
+        <File path="fdc_hfe/wd1772_dpll.v" type="file.verilog" enable="1"/>
+        <File path="fdc_hfe/mfm_amdetect.v" type="file.verilog" enable="1"/>
+        <File path="fdc_hfe/wd1772_mfm.v" type="file.verilog" enable="1"/>
         <File path="fx68k/fx68k.sv" type="file.verilog" enable="1"/>
         <File path="fx68k/fx68kAlu.sv" type="file.verilog" enable="1"/>
         <File path="fx68k/uaddrPla.sv" type="file.verilog" enable="1"/>

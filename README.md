@@ -110,6 +110,8 @@ using a [Linux PC](INSTALLATION_LINUX.md) or a [Windows PC](INSTALLATION_WINDOWS
 
 See the [trouble shooting guide](TROUBLESHOOTING.md) if you run into problems.
 
+Copy protected disks can be used as HFE images (v1 and v3), see [HFE floppy images](HFE.md).
+
 ## Wiring
 
 The properly flashed Tang Nano 20K will boot into the Atari ST desktop

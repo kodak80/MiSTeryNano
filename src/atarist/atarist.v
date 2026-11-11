@@ -912,6 +912,144 @@ wire [1:0] floppy_sel_exclusive = (floppy_sel == 2'b00)?2'b10:floppy_sel;
 // -> waits for spin up, but no index pulses
 // Fix: Floppy should generate index pulses even without disk inserted
    
+/* ------------------------------------------------------------------------------ */
+/* -------------------------- HFE (v1/v3) floppy path --------------------------- */
+/* ------------------------------------------------------------------------------ */
+
+// A drive whose image carries the HFE signature (hfe_valid) is served by the
+// MFM-level path in src/fdc_hfe (track player, WD1772 DPLL, mark detector,
+// WD1772 command state machine), so copy protections see the real track.
+// Any other image (.st) stays with fdc1772 as before. To fit the GW2AR-18
+// the HFE path serves drive A: only; drive B: is always fdc1772.
+//
+// CPU side: track/sector/data register writes go to both controllers so
+// their registers follow each other across drive changes; commands, reads,
+// IRQ and DRQ go to the one serving the selected drive.
+// SD side: the HFE loader only starts a block when fdc1772 is not using the
+// card; while it owns the card, fdc1772's requests wait and it does not see
+// the acknowledge.
+
+wire [1:0]  hfe_valid;
+wire        hfe_active = |(~floppy_sel_exclusive & hfe_valid);
+
+wire        fdc_reg_wr = fdc_sel && !fdc_rw && fdc_addr != 2'd0;   // track/sector/data write
+wire        st_fdc_sel  = fdc_sel && (!hfe_active || fdc_reg_wr);
+wire        hfe_fdc_sel = fdc_sel && ( hfe_active || fdc_reg_wr);
+
+wire        st_fdc_irq, st_fdc_drq, hfe_fdc_irq, hfe_fdc_drq;
+wire [7:0]  st_fdc_dout, hfe_fdc_dout;
+assign fdc_irq  = hfe_active ? hfe_fdc_irq  : st_fdc_irq;
+assign fdc_drq  = hfe_active ? hfe_fdc_drq  : st_fdc_drq;
+assign fdc_dout = hfe_active ? hfe_fdc_dout : st_fdc_dout;
+
+// SD card sharing
+wire [31:0] st_sd_lba, hfe_sd_lba;
+wire [1:0]  st_sd_rd, st_sd_wr, hfe_sd_rd;
+wire        hfe_sd_busy;
+reg         st_sd_active;      // fdc1772 has been granted the card
+reg         sd_ackD;
+always @(posedge clk_32) begin
+	sd_ackD <= sd_ack;
+	if (sd_ack && !sd_ackD && !hfe_sd_busy) st_sd_active <= 1'b1;   // fdc1772's transfer
+	if (!sd_ack) st_sd_active <= 1'b0;
+end
+assign sd_rd     = hfe_sd_rd | (hfe_sd_busy ? 2'b00 : st_sd_rd);
+assign sd_wr     = hfe_sd_busy ? 2'b00 : st_sd_wr;
+assign sd_lba    = hfe_sd_busy ? hfe_sd_lba : st_sd_lba;
+wire   st_sd_ack = sd_ack && !hfe_sd_busy;
+
+wire        hfe_step, hfe_step_out, hfe_present, hfe_track0, hfe_index, hfe_flux;
+
+assign hfe_valid[1] = 1'b0;      // drive B: is never HFE
+assign hfe_sd_rd[1] = 1'b0;
+
+hfe_floppy #(.FD_NUM(1)) hfe_floppy (
+	.clk            ( clk_32               ),
+	.clk8m_en       ( mhz8_en1             ),
+	.reset          ( !porb                ),   // power on only: a reset keeps the disks
+	.floppy_drive   ( floppy_sel_exclusive[0] ),
+	.side           ( !floppy_side         ),   // PSG port A bit 0 low = side 1
+	.img_mounted    ( sd_img_mounted[0]    ),
+	.img_size       ( sd_img_size[31:0]    ),
+	.hfe_valid      ( hfe_valid[0]         ),
+	.sd_lba         ( hfe_sd_lba           ),
+	.sd_rd          ( hfe_sd_rd[0]         ),
+	.sd_ack         ( sd_ack               ),
+	.sd_buff_addr   ( sd_buff_addr         ),
+	.sd_dout        ( sd_dout              ),
+	.sd_dout_strobe ( sd_dout_strobe       ),
+	.sd_hold        ( (|st_sd_rd) || (|st_sd_wr) || st_sd_active ),
+	.sd_busy        ( hfe_sd_busy          ),
+	.step_pulse     ( hfe_step             ),
+	.step_out       ( hfe_step_out         ),
+	.dr_present     ( hfe_present          ),
+	.dr_track0      ( hfe_track0           ),
+	.dr_index       ( hfe_index            ),
+	.flux           ( hfe_flux             ),
+	.loading        (                      ),
+	.head_track     (                      )
+);
+
+wire hfe_bit_valid, hfe_bit_val;
+wd1772_dpll hfe_dpll (
+	.clk       ( clk_32        ),
+	.reset     ( !porb         ),
+	.ce8       ( mhz8_en1      ),
+	.flux      ( hfe_flux      ),
+	.bit_valid ( hfe_bit_valid ),
+	.bit_val   ( hfe_bit_val   ),
+	.increment (               )
+);
+
+wire        hfe_sync_en, hfe_rt_restart;
+wire        hfe_mb_valid, hfe_mb_a1, hfe_mb_c2;
+wire  [7:0] hfe_mb_byte;
+wire  [1:0] hfe_mb_a1_run;
+wire [15:0] hfe_mb_crc;
+
+mfm_amdetect hfe_amdetect (
+	.clk        ( clk_32         ),
+	.reset      ( !porb          ),
+	.bit_valid  ( hfe_bit_valid  ),
+	.bit_val    ( hfe_bit_val    ),
+	.sync_en    ( hfe_sync_en    ),
+	.restart    ( hfe_rt_restart ),
+	.byte_valid ( hfe_mb_valid   ),
+	.byte_val   ( hfe_mb_byte    ),
+	.mark_a1    ( hfe_mb_a1      ),
+	.mark_c2    ( hfe_mb_c2      ),
+	.a1_run     ( hfe_mb_a1_run  ),
+	.crc        ( hfe_mb_crc     )
+);
+
+wd1772_mfm hfe_fdc (
+	.clk          ( clk_32            ),
+	.clk8m_en     ( mhz8_en1          ),
+	.floppy_reset ( ~peripheral_reset ),
+	.cpu_addr     ( fdc_addr          ),
+	.cpu_sel      ( hfe_fdc_sel       ),
+	.cpu_rw       ( fdc_rw            ),
+	.cpu_din      ( fdc_din           ),
+	.cpu_dout     ( hfe_fdc_dout      ),
+	.irq          ( hfe_fdc_irq       ),
+	.drq          ( hfe_fdc_drq       ),
+	.dr_present   ( hfe_present       ),
+	.dr_wp        ( 1'b1              ),   // read only for now
+	.dr_index     ( hfe_index         ),
+	.dr_track0    ( hfe_track0        ),
+	.step_pulse   ( hfe_step          ),
+	.step_out     ( hfe_step_out      ),
+	.motor_on     (                   ),
+	.mb_valid     ( hfe_mb_valid      ),
+	.mb_byte      ( hfe_mb_byte       ),
+	.mb_a1        ( hfe_mb_a1         ),
+	.mb_c2        ( hfe_mb_c2         ),
+	.mb_a1_run    ( hfe_mb_a1_run     ),
+	.mb_crc       ( hfe_mb_crc        ),
+	.sync_en      ( hfe_sync_en       ),
+	.rt_restart   ( hfe_rt_restart    )
+);
+
 fdc1772 fdc1772 (
 	.clkcpu         ( clk_32           ), // system cpu clock.
 	.clk8m_en       ( mhz8_en1         ),
@@ -924,14 +1062,14 @@ fdc1772 fdc1772 (
     .floppy_motor   ( 1'b0             ),  // unused in ST
 
 	// interrupts
-	.irq            ( fdc_irq          ),
-	.drq            ( fdc_drq          ),
+	.irq            ( st_fdc_irq       ),
+	.drq            ( st_fdc_drq       ),
 
 	.cpu_addr       ( fdc_addr         ),
-	.cpu_sel        ( fdc_sel          ),
+	.cpu_sel        ( st_fdc_sel       ),
 	.cpu_rw         ( fdc_rw           ),
 	.cpu_din        ( fdc_din          ),
-	.cpu_dout       ( fdc_dout         ),
+	.cpu_dout       ( st_fdc_dout      ),
 
 	// place any signals that need to be passed up to the top after here.
 	.img_ds         ( 1'b0                ), // "double sided" image. Unused in ST
@@ -940,10 +1078,10 @@ fdc1772 fdc1772 (
 	.img_mounted    ( sd_img_mounted[1:0] ), // signaling that new image has been mounted
 	.img_size       ( sd_img_size[31:0]   ), // size of image in bytes, 737280 for 80 tracks, 9 spt double sided
 
-	.sd_lba         ( sd_lba              ), // sector requested by fdc to be read/written
-	.sd_rd          ( sd_rd               ), // read request for two floppy drives
-	.sd_wr          ( sd_wr               ), // write request for two floppy drives
-	.sd_ack         ( sd_ack              ), // ackknowledge data transfer
+	.sd_lba         ( st_sd_lba           ), // sector requested by fdc to be read/written
+	.sd_rd          ( st_sd_rd            ), // read request for two floppy drives
+	.sd_wr          ( st_sd_wr            ), // write request for two floppy drives
+	.sd_ack         ( st_sd_ack           ), // ackknowledge data transfer
 	.sd_buff_addr   ( sd_buff_addr        ), // number of byte being transferred
 	.sd_dout        ( sd_dout             ), // data read by fdc
 	.sd_din         ( sd_din              ), // data written by fdc
