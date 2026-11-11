@@ -1,0 +1,10 @@
+# simulation build and run outputs
+/atarist
+/atarist_tb.fst
+/atarist_tb.fst.hier
+/fx68k/
+/obj_dir/
+/microrom.mem
+/nanorom.mem
+/ram.img
+/screenshots/frame*.png

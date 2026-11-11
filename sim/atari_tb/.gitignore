@@ -1,0 +1,8 @@
+# simulation build and run outputs, local ROM and disk images
+/atarist_tb
+/atarist_tb.fst
+/obj_dir/
+/ram.img
+/screenshots/
+*.img
+*.st
