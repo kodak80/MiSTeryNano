@@ -48,6 +48,13 @@
 // the disk keeps its rotation across track changes. The bytes before
 // start_pos come after the wrap, as on every later revolution.
 //
+// ff (fast forward) makes the cell timer count 16 clocks in each clock, so
+// the side plays 16 times as fast with every opcode, bitrate and skip as
+// usual. hfe_floppy uses it to bring a newly loaded track round to where
+// the disk is (the time since the index) and hides what it plays meanwhile.
+// The cells stay longer than a clock (the shortest, x = 36, lasts 2) and
+// the decoder needs 3 to 5 clocks a byte against at least 16.
+//
 // side: switching heads keeps the byte position (as FlashFloppy does). The
 // byte being played finishes; the next one comes from the other side, with
 // the bitrate back at nominal until the next BITRATE opcode. If the cell
@@ -63,6 +70,7 @@ module hfe_player (
 	input      [14:0] stream_len,   // bytes in the side stream
 	input             idx_at_start, // index at the stream start (v1, or v3 without INDEX)
 	input      [14:0] start_pos,    // first byte played after a reset (0 in the model tests)
+	input             ff,           // fast forward: time runs 16 times as fast (0 in the model tests)
 	input      [31:0] seed,         // weak bit generator seed (must not be 0)
 	input             side,
 
@@ -128,7 +136,8 @@ reg  [7:0] x;
 reg  [2:0] k;            // cell (bit) within the byte, bit 0 first
 reg [31:0] rng;
 
-wire [11:0] acc_n = acc + 12'd9;
+wire [11:0] acc_i = ff ? 12'd144 : 12'd9;   // 1/288 us per clock (16 clocks at once)
+wire [11:0] acc_n = acc + acc_i;
 wire [11:0] len8  = { 1'b0, x, 3'b000 };
 wire [12:0] acc_d = { 1'b0, acc_n } - { 1'b0, len8 };   // its borrow is the compare
 wire        ends  = running && !acc_d[12] && acc_d[11:0] != 12'd0;
@@ -193,7 +202,7 @@ always @(posedge clk) begin
 			if (!running) begin
 				running <= 1'b1;
 				start   <= 1'b1;
-				acc     <= 12'd9;   // time 0 is the start of this clock
+				acc     <= acc_i;   // time 0 is the start of this clock
 			end
 		end
 

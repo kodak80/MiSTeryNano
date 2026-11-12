@@ -109,6 +109,7 @@ hfe_player player (
 	.stream_len   ( stream_len   ),
 	.idx_at_start ( idx_at_start ),
 	.start_pos    ( 15'd0        ),
+	.ff           ( 1'b0         ),
 	.seed         ( seed         ),
 	.side         ( side         ),
 	.ram_addr     ( ram_addr     ),

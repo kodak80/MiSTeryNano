@@ -36,10 +36,21 @@
 // - Rotation: the time since the last index is always kept, as is the
 //   length of a revolution. While nothing plays (loading, an empty or
 //   missing track, no disk) the index pulses are made from that, so they
-//   never stop. A track that is ready starts playing at the next index, so
-//   the index keeps its period across seeks (HFE tracks start at the index,
-//   so the disk keeps its rotation); until then the drive reads nothing,
-//   as if the head were still settling.
+//   never stop. A track that is ready starts playing at once from the
+//   side's index (its INDEX opcode, or the stream start), fast forwarded
+//   (16 times as fast, nothing given to the controller) until it has
+//   played for as long as it has been since the index; from then on it
+//   plays at the disk's speed, where the disk is. So the index keeps its
+//   period across seeks (HFE tracks start at the index, so the disk keeps
+//   its rotation), and the drive reads within a few ms of the track being
+//   in, as a real drive does once the head has settled: game loaders time
+//   a SEEK with verify for an ID field to come along within a sector, not
+//   after up to a revolution. If the index comes first (fast forward takes
+//   at most 1/15 of the time since the index) the track starts there, and
+//   if the side's stream comes round to its index first (a revolution
+//   longer than the stream) that index is given and it plays on from there.
+//   Until it plays the drive reads nothing, as if the head were still
+//   settling.
 //
 // Weak bits are seeded from the rotation time when a load ends, so they
 // differ from load to load.
@@ -187,7 +198,11 @@ wire        v_due   = clk8m_en && (rot_t1 >= rot_len || rot_t[23:21] != 3'd0);
 // (the player gives that index)
 wire        v_start;
 wire        v_index = !playing && v_due && !v_start;
-assign      dr_index = playing ? p_index : v_index;
+// fast forward: the index the player starts with is not given (the disk
+// passed it rot_t ago), a second one is (and ends the fast forward)
+reg         ff, ff_idx, p_restart;
+reg  [25:0] ff_t;          // time played since that index, 32 MHz clocks
+assign      dr_index = playing ? p_index && (!ff || ff_idx) : v_index;
 
 always @(posedge clk) begin
 	if (reset) begin
@@ -283,6 +298,8 @@ always @(posedge clk) begin : loader
 		sd_rd      <= 0;
 		tag_valid  <= 1'b0;
 		playing    <= 1'b0;
+		ff         <= 1'b0;
+		p_restart  <= 1'b0;
 	end else begin
 		// ------------------------------------------- bytes of the block being read
 		if (lstate == L_SDWAIT && sd_ack && sd_dout_strobe) begin
@@ -446,13 +463,36 @@ always @(posedge clk) begin : loader
 		L_WAITIDX:
 			if (|mount_pend || want_load || !tag_valid)
 				lstate <= L_IDLE;                // something else to do first
-			else if (s_len == 15'd0 || v_due) begin
+			else begin
+				// at the index: play from it; otherwise catch the disk up
 				playing <= s_len != 15'd0;       // an empty side stays blank
+				ff      <= s_len != 15'd0 && !v_due;
+				ff_idx  <= 1'b0;
+				ff_t    <= 26'd0;
 				lstate  <= L_PLAY;
 			end
 
 		default: lstate <= L_IDLE;
 		endcase
+
+		// fast forward until the player has played for as long as it has been
+		// since the index (rot_t, 8 MHz cycles)
+		p_restart <= 1'b0;
+		if (ff) begin
+			if (!playing)
+				ff <= 1'b0;
+			else if (v_due) begin
+				ff        <= 1'b0;               // the index came first: start there
+				p_restart <= 1'b1;
+			end else if (p_index) begin
+				if (ff_idx) ff <= 1'b0;          // the stream's next index: given
+				ff_idx <= 1'b1;
+				ff_t   <= 26'd0;
+			end else begin
+				ff_t <= ff_t + 26'd16;
+				if (ff_idx && ff_t >= { rot_t, 2'b00 }) ff <= 1'b0;
+			end
+		end
 
 		// a mount (or unmount) takes the drive out of service at once
 		for (i = 0; i < FD_NUM; i = i + 1)
@@ -471,16 +511,17 @@ end
 
 // side 1 of a single sided image is blank
 wire p_flux;
-assign flux = p_flux && (hv_ds[tag_drive] || !side);
+assign flux = p_flux && !ff && (hv_ds[tag_drive] || !side);
 
 hfe_player player (
 	.clk          ( clk                          ),
-	.reset        ( !playing                     ),
+	.reset        ( !playing || p_restart        ),
 	.v3           ( hv_v3[tag_drive]             ),
 	.nominal_x    ( hv_x_r[tag_drive*8 +: 8]     ),
 	.stream_len   ( s_len                        ),
 	.idx_at_start ( !hv_v3[tag_drive] || !has_index[side] ),
 	.start_pos    ( side ? idx_pos[29:15] : idx_pos[14:0] ),
+	.ff           ( ff                           ),
 	.seed         ( p_seed                       ),
 	.side         ( side & hv_ds[tag_drive]      ),
 	.ram_addr     ( buf_raddr                    ),

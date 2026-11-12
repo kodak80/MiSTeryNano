@@ -95,9 +95,11 @@ after B: was selected, and that a non-HFE image is not taken as HFE.
   track buffer (`BUF_BYTES`, 40 KB) for the selected drive, both sides,
   so side changes are immediate; a track loads on every step, drive
   change or mount. Index pulses never stop: they are kept from the last
-  revolution while nothing plays, and a newly loaded track starts
-  playing at the next index, from the side's INDEX opcode (or the
-  stream start), so the index keeps its period across seeks.
+  revolution while nothing plays. A newly loaded track starts at once
+  from the side's INDEX opcode (or the stream start), fast forwarded
+  (16x, hidden from the controller) until it has caught up with the
+  time since the index, so the index keeps its period across seeks and
+  the drive reads within a few ms of the track being in.
 
 - `hfe_player`: 32 MHz. Reads one side of the raw HFE track (as stored
   in the file) from a synchronous RAM (one clock read latency), the
