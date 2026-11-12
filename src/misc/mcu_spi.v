@@ -38,11 +38,17 @@ reg [3:0] spi_cnt;
 reg [7:0] spi_data_in;
 reg [6:0] spi_sr_in;
 reg spi_data_in_ready;
+// the byte in spi_data_in is the first of its transfer (the target id).
+// It travels with the data, so the clk side does not have to see the short
+// spi_io_ss pulse between two transfers to know where one starts.
+reg spi_first = 1'b1;   // the first byte after configuration starts a transfer too
+reg spi_data_first;
 
 // read data on falling edge of spi clock
 always @(negedge spi_io_clk or posedge spi_io_ss) begin
     if(spi_io_ss) begin
         spi_cnt <= 4'd0;
+        spi_first <= 1'b1;
     end else begin
         // lower 3 bits cound bits, upper 8 bits count bytes
         spi_cnt <= spi_cnt + 4'd1;
@@ -54,6 +60,8 @@ always @(negedge spi_io_clk or posedge spi_io_ss) begin
         if(spi_cnt[2:0] == 3'd7) begin
             // latch byte and raise ready flag
             spi_data_in <= { spi_sr_in, spi_io_din };
+            spi_data_first <= spi_first;
+            spi_first <= 1'b0;
             spi_data_in_ready <= !spi_data_in_ready;
         end
 
@@ -73,40 +81,45 @@ assign mcu_dout = spi_in_data;
 reg [7:0] spi_target;
 reg [3:0] spi_in_cnt;
 
-always @(posedge clk) begin
-   reg [1:0] spi_data_in_readyD;
+// The SPI side runs on the MCU's clock. Everything it hands over is brought
+// into clk's domain through synchronizers: the ready toggle through three
+// flip-flops (the first two only resolve metastability, the edge is taken
+// between the second and the third), spi_io_ss through two. The byte and
+// its first flag were written together with the toggle and stay put for a
+// whole byte time, so they are stable when the toggle's edge is seen here.
+// (Using the first flip-flop's output, or spi_io_ss unsynchronized, worked
+// or not depending on how a build was placed and routed.)
+reg [2:0] spi_data_in_readyD;
+reg [1:0] spi_ssD;
 
-   spi_data_in_readyD <= { spi_data_in_readyD[0], spi_data_in_ready };
+always @(posedge clk) begin
+   spi_data_in_readyD <= { spi_data_in_readyD[1:0], spi_data_in_ready };
+   spi_ssD <= { spi_ssD[0], spi_io_ss };
 
    mcu_sys_strobe <= 1'b0;   
    mcu_hid_strobe <= 1'b0;   
    mcu_osd_strobe <= 1'b0;   
    mcu_sdc_strobe <= 1'b0;   
    
-   if(spi_io_ss)
-      spi_in_cnt <= 4'd0;
-   else begin
-      // parse incoming bit whenever ready toggles
-      // if(spi_data_in_readyD == 2'b01) begin
-      if(spi_data_in_readyD[1] ^ spi_data_in_readyD[0]) begin
-	 // incoming SPI byte is now in local clock domain
+   if(spi_data_in_readyD[2] ^ spi_data_in_readyD[1]) begin
+      // incoming SPI byte is now in local clock domain
 
-	 // first byte is target id. Else send external trigger
-	 if(spi_in_cnt == 4'd0)
-           spi_target <= spi_data_in;
-	 else begin      
-	    if(spi_target == 8'd0) mcu_sys_strobe <= 1'b1;
-	    if(spi_target == 8'd1) mcu_hid_strobe <= 1'b1;
-	    if(spi_target == 8'd2) mcu_osd_strobe <= 1'b1;
-	    if(spi_target == 8'd3) mcu_sdc_strobe <= 1'b1;
+      // first byte is target id. Else send external trigger
+      if(spi_data_first) begin
+         spi_target <= spi_data_in;
+         spi_in_cnt <= 4'd1;
+      end else begin      
+         if(spi_target == 8'd0) mcu_sys_strobe <= 1'b1;
+         if(spi_target == 8'd1) mcu_hid_strobe <= 1'b1;
+         if(spi_target == 8'd2) mcu_osd_strobe <= 1'b1;
+         if(spi_target == 8'd3) mcu_sdc_strobe <= 1'b1;
    
-            spi_in_data <= spi_data_in;
-	 end
-	 
-	 if(spi_in_cnt != 4'd15)
-           spi_in_cnt <= spi_in_cnt + 4'd1;
+         spi_in_data <= spi_data_in;
+         if(spi_in_cnt != 4'd15)
+            spi_in_cnt <= spi_in_cnt + 4'd1;
       end
-   end
+   end else if(spi_ssD[1])
+      spi_in_cnt <= 4'd0;
 end
 
 wire [7:0] in_byte = 
