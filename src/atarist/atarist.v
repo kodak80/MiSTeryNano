@@ -930,7 +930,13 @@ wire [1:0] floppy_sel_exclusive = (floppy_sel == 2'b00)?2'b10:floppy_sel;
 // the acknowledge.
 
 wire [1:0]  hfe_valid;
-wire        hfe_active = |(~floppy_sel_exclusive & hfe_valid);
+// There is no drive B: (no room). So that selecting B: behaves like a drive
+// without a disk, as a missing B: did before (TOS restores B: at boot and
+// waits seconds for a controller that never answers), the HFE controller
+// serves B: as an empty drive: head at track 0, index pulses, no data.
+wire        a_sel = ~floppy_sel_exclusive[0];
+wire        b_sel = ~floppy_sel_exclusive[1];
+wire        hfe_active = (a_sel & hfe_valid[0]) | b_sel;
 
 wire        fdc_reg_wr = fdc_sel && !fdc_rw && fdc_addr != 2'd0;   // track/sector/data write
 wire        st_fdc_sel  = fdc_sel && (!hfe_active || fdc_reg_wr);
@@ -961,6 +967,8 @@ wire   st_sd_ack = sd_ack && !hfe_sd_busy;
 wire        hfe_step, hfe_step_out, hfe_present, hfe_track0, hfe_index, hfe_flux;
 
 assign hfe_valid[1] = 1'b0;      // drive B: is never HFE
+assign st_sd_rd[1]  = 1'b0;      // nor .st: there is no drive B:
+assign st_sd_wr[1]  = 1'b0;
 assign hfe_sd_rd[1] = 1'b0;
 
 hfe_floppy #(.FD_NUM(1)) hfe_floppy (
@@ -995,7 +1003,7 @@ wd1772_dpll hfe_dpll (
 	.clk       ( clk_32        ),
 	.reset     ( !porb         ),
 	.ce8       ( mhz8_en1      ),
-	.flux      ( hfe_flux      ),
+	.flux      ( hfe_flux & a_sel ),
 	.bit_valid ( hfe_bit_valid ),
 	.bit_val   ( hfe_bit_val   ),
 	.increment (               )
@@ -1057,10 +1065,10 @@ wd1772_mfm hfe_fdc (
 	.cpu_dout     ( hfe_fdc_dout      ),
 	.irq          ( hfe_fdc_irq       ),
 	.drq          ( hfe_fdc_drq       ),
-	.dr_present   ( hfe_present       ),
+	.dr_present   ( hfe_present & a_sel ),
 	.dr_wp        ( 1'b1              ),   // read only for now
 	.dr_index     ( hfe_index         ),
-	.dr_track0    ( hfe_track0        ),
+	.dr_track0    ( a_sel ? hfe_track0 : 1'b1 ),
 	.step_pulse   ( hfe_step          ),
 	.step_out     ( hfe_step_out      ),
 	.motor_on     (                   ),
@@ -1074,12 +1082,14 @@ wd1772_mfm hfe_fdc (
 	.rt_restart   ( hfe_rt_restart    )
 );
 
-fdc1772 fdc1772 (
+// drive B: is left out of the Tang Nano 20K HFE build to make room: drive A:
+// takes .st (here) or .hfe (the HFE path); selecting B: finds no drive.
+fdc1772 #(.FD_NUM(1)) fdc1772 (
 	.clkcpu         ( clk_32           ), // system cpu clock.
 	.clk8m_en       ( mhz8_en1         ),
 
 	// external set signals
-	.floppy_drive   ( floppy_sel_exclusive ),
+	.floppy_drive   ( floppy_sel_exclusive[0] ),
 	.floppy_side    ( floppy_side      ),
 	.floppy_reset   ( ~peripheral_reset),
     .floppy_step    (                  ),
@@ -1098,13 +1108,13 @@ fdc1772 fdc1772 (
 	// place any signals that need to be passed up to the top after here.
 	.img_ds         ( 1'b0                ), // "double sided" image. Unused in ST
 	.img_type       ( 3'd1                ), // Atari ST floppy type
-	.img_wp         ( floppy_protected    ), // write protect
-	.img_mounted    ( sd_img_mounted[1:0] ), // signaling that new image has been mounted
+	.img_wp         ( floppy_protected[0] ), // write protect
+	.img_mounted    ( sd_img_mounted[0]   ), // signaling that new image has been mounted
 	.img_size       ( sd_img_size[31:0]   ), // size of image in bytes, 737280 for 80 tracks, 9 spt double sided
 
 	.sd_lba         ( st_sd_lba           ), // sector requested by fdc to be read/written
-	.sd_rd          ( st_sd_rd            ), // read request for two floppy drives
-	.sd_wr          ( st_sd_wr            ), // write request for two floppy drives
+	.sd_rd          ( st_sd_rd[0]         ), // read request for two floppy drives
+	.sd_wr          ( st_sd_wr[0]         ), // write request for two floppy drives
 	.sd_ack         ( st_sd_ack           ), // ackknowledge data transfer
 	.sd_buff_addr   ( sd_buff_addr        ), // number of byte being transferred
 	.sd_dout        ( sd_dout             ), // data read by fdc

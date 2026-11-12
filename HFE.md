@@ -11,9 +11,9 @@ they are on the disk.
 Select an `.hfe` file for Disk A: in the menu, as you would an `.st`. The
 core looks at the file itself: a file with the HFE signature goes through
 the HFE floppy path, anything else through the existing `.st` floppy.
-Disk B: takes `.st` images only, so an `.hfe` in A: and an `.st` in B:
-works. (The Tang Nano 20K has no room left for a second HFE drive; the
-logic serving A: is all it can fit.)
+There is no drive B: in this build: the HFE path and the `.st` floppy
+together fill the Tang Nano 20K, so the second drive (and the Cubase
+dongles) are left out to give the build room. Swap disks in A:.
 
 No FPGA Companion update is needed; the menu entry for the disks comes
 from the core.
@@ -39,11 +39,12 @@ SD card -> track loader -> track player -> flux -> WD1772 data separator
 ## Limits
 
 - Read only: the disk is write protected. Saving to an HFE disk is not
-  possible yet; keep saves on an `.st` in drive B:.
-- HFE images in drive A: only.
+  possible yet; for saves, swap an `.st` into A:.
+- One drive (A:) only.
 - Selecting the drive or stepping the head loads the new track from the SD
-  card first (a few tens of milliseconds) and it starts at the next index,
-  so a seek can take up to a revolution longer than on a real drive.
+  card first (a few tens of milliseconds, depending on the card and the
+  MCU), a little longer than a real drive takes; the track then plays
+  from where the disk is.
 - Changing sides keeps the position on the track, so the first byte after
   a side change may read as blank, much like a real drive.
 
