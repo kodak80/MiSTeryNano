@@ -366,7 +366,7 @@ void tick(int c) {
 
   // fake a disk image insertion
   static int insert_counter = 0;
-  if(insert_counter < 1000) {
+  if(insert_counter < 1000 && tb->resb) {   // after power on, as the MCU does
     // check if floppy image can be mounted    
     if(insert_counter == 100) {
 #ifdef FLOPPY_ST
