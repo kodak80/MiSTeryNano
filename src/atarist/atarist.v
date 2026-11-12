@@ -925,13 +925,9 @@ wire [1:0] floppy_sel_exclusive = (floppy_sel == 2'b00)?2'b10:floppy_sel;
 // CPU side: track/sector/data register writes go to both controllers so
 // their registers follow each other across drive changes; commands, reads,
 // IRQ and DRQ go to the one serving the selected drive.
-// SD side: the HFE loader only starts a block when fdc1772 and ACSI are not
-// using the card; while it owns the card, fdc1772's requests wait and it does
-// not see the acknowledge. It also leaves the card alone while the ST is held
-// in reset: at power up the MCU holds the reset while it reads its ini file
-// and mounts the disks, and it is not expecting card requests from the core
-// then (fdc1772 makes none before TOS runs). An image mounted at boot is
-// looked at once the ST runs, long before TOS reads its boot sector.
+// SD side: the HFE loader only starts a block when fdc1772 is not using the
+// card; while it owns the card, fdc1772's requests wait and it does not see
+// the acknowledge.
 
 wire [1:0]  hfe_valid;
 wire        hfe_active = |(~floppy_sel_exclusive & hfe_valid);
@@ -982,8 +978,7 @@ hfe_floppy #(.FD_NUM(1)) hfe_floppy (
 	.sd_buff_addr   ( sd_buff_addr         ),
 	.sd_dout        ( sd_dout              ),
 	.sd_dout_strobe ( sd_dout_strobe       ),
-	.sd_hold        ( (|st_sd_rd) || (|st_sd_wr) || st_sd_active ||
-	                  (|acsi_rd_req) || (|acsi_wr_req) || peripheral_reset ),
+	.sd_hold        ( (|st_sd_rd) || (|st_sd_wr) || st_sd_active ),
 	.sd_busy        ( hfe_sd_busy          ),
 	.step_pulse     ( hfe_step             ),
 	.step_out       ( hfe_step_out         ),
