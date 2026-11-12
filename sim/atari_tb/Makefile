@@ -41,7 +41,7 @@ EXTRA_LDFLAGS = `sdl2-config --libs` -lSDL2_image
 all: $(PRJ)
 
 $(PRJ): $(PRJ).cpp ${HDL_FILES} Makefile
-	verilator -O3 -Wno-fatal --trace-fst --no-timing --threads 1 --trace-underscore -I$(IKBD_DIR)/hd63701 --top-module $(PRJ) -cc ${HDL_FILES} --exe $(PRJ).cpp -o ../$(PRJ) -CFLAGS "${EXTRA_CFLAGS}" -LDFLAGS "${EXTRA_LDFLAGS}"
+	verilator $(VDEFS) -O3 -Wno-fatal --trace-fst --no-timing --threads 1 --trace-underscore -I$(IKBD_DIR)/hd63701 --top-module $(PRJ) -cc ${HDL_FILES} --exe $(PRJ).cpp -o ../$(PRJ) -CFLAGS "${EXTRA_CFLAGS}" -LDFLAGS "${EXTRA_LDFLAGS}"
 	make -j -C ${OBJ_DIR} -f V$(PRJ).mk
 
 $(PRJ).fst: $(PRJ)

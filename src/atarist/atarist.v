@@ -1027,6 +1027,30 @@ mfm_amdetect hfe_amdetect (
 	.crc        ( hfe_mb_crc     )
 );
 
+`ifdef FDC_TRACE
+// simulation only: log the CPU's FDC accesses (time from clk_32 cycles)
+reg [39:0] ft_cyc = 0;
+reg        ft_selD = 0, ft_irqD = 0;
+reg [7:0]  ft_last_st = 8'hff, ft_dout = 0;
+always @(posedge clk_32) begin
+	ft_cyc <= ft_cyc + 1;
+	ft_selD <= fdc_sel;
+	ft_irqD <= fdc_irq;
+	if (fdc_sel) ft_dout <= fdc_dout;
+	if (fdc_sel && !ft_selD && !fdc_rw)
+		$display("%.3fms FDC W%0d %02x drv=%b side=%b hfe=%b", ft_cyc/32000.0, fdc_addr, fdc_din,
+		         floppy_sel_exclusive, floppy_side, hfe_active);
+	if (!fdc_sel && ft_selD && fdc_rw && fdc_addr == 2'd0 && ft_dout != ft_last_st) begin
+		ft_last_st <= ft_dout;
+		$display("%.3fms FDC ST %02x", ft_cyc/32000.0, ft_dout);
+	end
+	if (!fdc_sel && ft_selD && fdc_rw && (fdc_addr == 2'd1 || fdc_addr == 2'd2))
+		$display("%.3fms FDC R%0d %02x", ft_cyc/32000.0, fdc_addr, ft_dout);
+	if (fdc_irq && !ft_irqD)
+		$display("%.3fms FDC IRQ", ft_cyc/32000.0);
+end
+`endif
+
 wd1772_mfm hfe_fdc (
 	.clk          ( clk_32            ),
 	.clk8m_en     ( mhz8_en1          ),
