@@ -28,6 +28,7 @@
 #include "Vfloppy_tb_top.h"
 
 static bool quiet = false;
+static const char *swap_to = nullptr;   // -c: disk change in drive A to this image
 
 static const char *base(const char *p) {
   const char *s = strrchr(p, '/');
@@ -332,9 +333,10 @@ int main(int argc, char **argv) {
   for (; argi < argc && argv[argi][0] == '-'; argi++) {
     if (!strcmp(argv[argi], "-t") && argi + 1 < argc) only_t = atoi(argv[++argi]);
     else if (!strcmp(argv[argi], "-q")) quiet = true;
+    else if (!strcmp(argv[argi], "-c") && argi + 1 < argc) swap_to = argv[++argi];
   }
   if (argi >= argc) {
-    fprintf(stderr, "usage: %s [-t track] [-q] image.hfe [other.hfe] [not_hfe.st]\n", argv[0]);
+    fprintf(stderr, "usage: %s [-t track] [-q] [-c disk2.hfe] image.hfe [other.hfe] [not_hfe.st]\n", argv[0]);
     return 1;
   }
   auto top = std::make_unique<Vfloppy_tb_top>();
@@ -430,6 +432,62 @@ int main(int argc, char **argv) {
     if (argi + 2 < argc && load_file(argv[argi + 2], sim.file[1])) {
       if (sim.mount(1, 32000 * 50)) FAILF("%s became an HFE drive", base(argv[argi + 2]));
       else if (!quiet) printf("ok   %s is not taken as HFE\n", base(argv[argi + 2]));
+    }
+  }
+
+  // disk change in drive A (-c): the new image is read, with the head left
+  // where it was (as a game waiting for "insert disk 2" leaves it), both
+  // when the change comes while idle and in the middle of a READ ADDRESS
+  if (swap_to) {
+    Hfe h2;
+    std::vector<uint8_t> f2;
+    if (!h2.load(swap_to) || !load_file(swap_to, f2)) {
+      printf("%s: not an HFE file\n", swap_to);
+      return 1;
+    }
+    const char *n2 = base(swap_to);
+    std::vector<uint8_t> f1 = sim.file[0];
+    for (int pass = 0; pass < 4; pass++) {
+      bool mid = pass & 1;                       // change during a READ ADDRESS
+      bool to2 = !(pass & 2);                    // 1 -> 2, then back 2 -> 1
+      const Hfe &hn = to2 ? h2 : h;
+      const char *nn = to2 ? n2 : name;
+      int trk = 1 + pass;                        // a track with data on both
+      t = trk; s = 0;
+      sim.top->floppy_drive = 2;
+      sim.top->side = 0;
+      sim.write(3, trk);
+      sim.command(0x18);                         // seek, the head stays here
+      sim.ticks(32000 * 50);
+      sim.file[0] = to2 ? f2 : f1;
+      if (mid) {
+        sim.command(0xC0, 32000000LL * 3, [&](int64_t dt) {
+          if (dt == 32000 * 3) { sim.top->img_size = (uint32_t)sim.file[0].size(); sim.top->img_mounted = 1; }
+          else if (dt == 32000 * 3 + 1) sim.top->img_mounted = 0;
+        });
+        int64_t t0 = sim.clocks;
+        while (!(sim.top->hfe_valid & 1) && sim.clocks - t0 < 32000 * 200) sim.tick();
+        if (!(sim.top->hfe_valid & 1)) FAILF("disk change to %s (during READ ADDRESS): drive not valid again", nn);
+      } else if (!sim.mount(0)) FAILF("disk change to %s: drive not valid again", nn);
+      // the new disk's IDs and data on the track the head is on
+      SideModel m = model_side(hn, trk, 0);
+      Sim::Run ra = sim.command(0xC0);
+      bool id_ok = false;
+      for (auto &f : m.fl)
+        id_ok |= ra.data.size() == 6 && ra.data[0] == f.trk && ra.data[2] == f.sec && ra.data[3] == f.len;
+      bool rd_ok = m.fl.empty();
+      for (auto &f : m.fl)
+        if (f.id_crc_ok && f.dam >= 0) {
+          sim.write(1, f.trk); sim.write(2, f.sec);
+          Sim::Run r = sim.command(0x80);
+          rd_ok = !r.timeout && match_sector(m, f.trk, f.sec, r);
+          break;
+        }
+      if (!m.fl.empty() && (!id_ok || !rd_ok))
+        FAILF("disk change to %s%s: track %d reads %s", nn, mid ? " during READ ADDRESS" : "", trk,
+              !id_ok ? "a wrong ID" : "wrong data");
+      else if (!quiet) printf("ok   disk change to %s%s: track %d reads the new disk\n", nn,
+                              mid ? " during READ ADDRESS" : "", trk);
     }
   }
 

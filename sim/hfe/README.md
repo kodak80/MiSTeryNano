@@ -72,6 +72,7 @@ core's `sd_rd`/`sd_ack`/byte-strobe handshake, ~100 us latency, ~4 MB/s).
 ```
 make tb_floppy
 ./tb_floppy image.hfe [other.hfe] [not_hfe.st]
+./tb_floppy -t 0 -c disk2.hfe disk1.hfe    # disk change in drive A (head left on its track)
 ```
 
 It mounts the image in drive A (header and track table from the card),
