@@ -341,9 +341,16 @@ void tick(int c) {
   simulation_time += TICKLEN;
 
   static int last_rom = 0;
+  // ROMDLY=n (environment): the ROM data only becomes valid n 32 MHz cycles
+  // after rom_n falls (0xffff before), to measure the CPU's margin on the
+  // flash read time
+  static int rom_dly = getenv("ROMDLY") ? atoi(getenv("ROMDLY")) : 0;
+  static int rom_cyc = 0;
+  if (c) rom_cyc = tb->rom_n ? 0 : rom_cyc + 1;
   if (c && !tb->rom_n) {
     // rom access
-    tb->rom_data_out = (rom[(tb->rom_addr<<1) & 0x3ffff] * 256) + rom[((tb->rom_addr<<1) + 1)& 0x3ffff];
+    tb->rom_data_out = (rom_cyc > rom_dly) ?
+      (rom[(tb->rom_addr<<1) & 0x3ffff] * 256) + rom[((tb->rom_addr<<1) + 1)& 0x3ffff] : 0xffff;
   }
   last_rom = !tb->rom_n;
   
