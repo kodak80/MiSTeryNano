@@ -1115,6 +1115,12 @@ fdc1772 fdc1772 (
 /* ------------------------------------------------------------------------------ */
 /* ------------------------------- Cubase dongle  ------------------------------- */
 /* ------------------------------------------------------------------------------ */
+// Left out of the Tang Nano 20K HFE build to make room (define CUBASE_DONGLE
+// to build them): the HFE drive fills the GW2AR-18, and Cubase runs without
+// a dongle with the patched versions. The cartridge port reads $ff then.
+`ifndef CUBASE_DONGLE
+assign cart_data_out = 16'hffff;
+`else
 assign cart_data_out = { cubase_en ? cubase_dout : 8'hff, 8'hff};  
 
 wire        cubase3_d8;
@@ -1149,6 +1155,7 @@ cubase3_dongle cubase3_dongle (
 	.a8         ( mbus_a[8]        ),
 	.d8         ( cubase3_d8       )
 );
+`endif
 
 endmodule
 
