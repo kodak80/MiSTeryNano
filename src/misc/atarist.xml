@@ -64,10 +64,6 @@
 	<listentry label="Color" value="0"/>
 	<listentry label="Mono" value="1"/>
       </list>	
-      <list label="Cartridge:" id="Q" default="0">
-	<listentry label="None" value="0"/>
-	<listentry label="Cubase 2&amp;3" value="1"/>
-      </list>
       <list label="Mouse:" id="J" default="0">
 	<listentry label="USB" value="0"/>
 	<listentry label="Atari ST" value="1"/>
