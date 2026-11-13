@@ -8,6 +8,7 @@ module atarist_tb (
 	
         // Video output
         input wire	   mono_detect, // low for monochrome
+        input wire	   key_space,   // space bar held (KEYAT in atarist_tb.cpp)
         output wire [5:0]  r,
         output wire [5:0]  g,
         output wire [5:0]  b,
@@ -47,6 +48,9 @@ module atarist_tb (
         // export all LEDs
         output wire [3:0]  leds
 );
+
+wire [14:0] kbd_col;
+
 
 wire [31:0] fdc_lba;
 wire [7:0] fdc_din;   // currently no write support
@@ -100,8 +104,8 @@ atarist atarist (
         .blank_n(),
 	
 	// keyboard(), mouse and joystick(s)
-        .keyboard_matrix_out(),
-        .keyboard_matrix_in(8'hff),
+        .keyboard_matrix_out(kbd_col),
+        .keyboard_matrix_in((key_space && !kbd_col[9]) ? 8'h7f : 8'hff),   // space: column 9, row 7
         .joy0(6'b000000),
         .joy1(5'b00000),
 	

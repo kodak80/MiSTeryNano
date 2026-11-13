@@ -344,6 +344,9 @@ void tick(int c) {
   // ROMDLY=n (environment): the ROM data only becomes valid n 32 MHz cycles
   // after rom_n falls (0xffff before), to measure the CPU's margin on the
   // flash read time
+  // KEYAT=ms (environment): hold the space bar for 200 ms from then
+  static double key_at = getenv("KEYAT") ? atof(getenv("KEYAT")) : -1;
+  tb->key_space = key_at >= 0 && simulation_time*1000.0 >= key_at && simulation_time*1000.0 < key_at + 200;
   static int rom_dly = getenv("ROMDLY") ? atoi(getenv("ROMDLY")) : 0;
   static int rom_cyc = 0;
   if (c) rom_cyc = tb->rom_n ? 0 : rom_cyc + 1;
