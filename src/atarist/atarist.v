@@ -931,22 +931,9 @@ wire [1:0] floppy_sel_exclusive = (floppy_sel == 2'b00)?2'b10:floppy_sel;
 // the acknowledge.
 
 wire [1:0]  hfe_valid;
-// There is no drive B: (no room). So that selecting B: behaves like a drive
-// without a disk, as a missing B: did before (TOS restores B: at boot and
-// waits seconds for a controller that never answers), the HFE controller
-// serves B: as an empty drive: head at track 0, index pulses, no data.
-// A disk change in A: flips the write protect signal for a second, as the
-// drive's sensor does while a disk goes out and the next one goes in. TOS
-// (and games loading through it) learn of a new disk from that change; a
-// read-only HFE disk is otherwise write protected all the time, so a swap
-// went unnoticed when the disks had the same boot sector serial number
-// (The Chaos Engine disk 2 was "not seen").
-reg  [24:0] disk_chg_cnt = 25'd0;
-wire        disk_chg = disk_chg_cnt != 25'd0;
-always @(posedge clk_32)
-	if (sd_img_mounted[0])  disk_chg_cnt <= 25'd32_000_000;   // 1 s
-	else if (disk_chg)      disk_chg_cnt <= disk_chg_cnt - 25'd1;
-
+// Drive A: is served by fdc1772 (.st) or the HFE controller (.hfe); drive
+// B: by the HFE controller only (fdc1772's second drive would not fit), as
+// an empty drive when it holds no HFE image.
 wire        a_sel = ~floppy_sel_exclusive[0];
 wire        b_sel = ~floppy_sel_exclusive[1];
 wire        hfe_active = (a_sel & hfe_valid[0]) | b_sel;
@@ -980,22 +967,22 @@ wire   st_sd_ack = sd_ack && !hfe_sd_busy;
 
 wire        hfe_step, hfe_step_out, hfe_present, hfe_track0, hfe_index, hfe_flux;
 
-assign hfe_valid[1] = 1'b0;      // drive B: is never HFE
-assign st_sd_rd[1]  = 1'b0;      // nor .st: there is no drive B:
+assign st_sd_rd[1]  = 1'b0;      // fdc1772 serves A: only; B: is HFE only
 assign st_sd_wr[1]  = 1'b0;
-assign hfe_sd_rd[1] = 1'b0;
 
-hfe_floppy #(.FD_NUM(1)) hfe_floppy (
+// both drives share the one track buffer, player and controller: only the
+// selected drive's track is loaded, the rest is a few registers per drive
+hfe_floppy #(.FD_NUM(2)) hfe_floppy (
 	.clk            ( clk_32               ),
 	.clk8m_en       ( mhz8_en1             ),
 	.reset          ( !porb                ),   // power on only: a reset keeps the disks
-	.floppy_drive   ( floppy_sel_exclusive[0] ),
+	.floppy_drive   ( floppy_sel_exclusive ),
 	.side           ( !floppy_side         ),   // PSG port A bit 0 low = side 1
-	.img_mounted    ( sd_img_mounted[0]    ),
+	.img_mounted    ( sd_img_mounted[1:0]  ),
 	.img_size       ( sd_img_size[31:0]    ),
-	.hfe_valid      ( hfe_valid[0]         ),
+	.hfe_valid      ( hfe_valid            ),
 	.sd_lba         ( hfe_sd_lba           ),
-	.sd_rd          ( hfe_sd_rd[0]         ),
+	.sd_rd          ( hfe_sd_rd            ),
 	.sd_ack         ( sd_ack               ),
 	.sd_buff_addr   ( sd_buff_addr         ),
 	.sd_dout        ( sd_dout              ),
@@ -1017,7 +1004,7 @@ wd1772_dpll hfe_dpll (
 	.clk       ( clk_32        ),
 	.reset     ( !porb         ),
 	.ce8       ( mhz8_en1      ),
-	.flux      ( hfe_flux & a_sel ),
+	.flux      ( hfe_flux      ),
 	.bit_valid ( hfe_bit_valid ),
 	.bit_val   ( hfe_bit_val   ),
 	.increment (               )
@@ -1079,10 +1066,10 @@ wd1772_mfm hfe_fdc (
 	.cpu_dout     ( hfe_fdc_dout      ),
 	.irq          ( hfe_fdc_irq       ),
 	.drq          ( hfe_fdc_drq       ),
-	.dr_present   ( hfe_present & a_sel ),
+	.dr_present   ( hfe_present       ),
 	.dr_wp        ( !disk_chg         ),   // read only (writes are refused)
 	.dr_index     ( hfe_index         ),
-	.dr_track0    ( a_sel ? hfe_track0 : 1'b1 ),
+	.dr_track0    ( hfe_track0        ),
 	.step_pulse   ( hfe_step          ),
 	.step_out     ( hfe_step_out      ),
 	.motor_on     (                   ),
@@ -1096,8 +1083,8 @@ wd1772_mfm hfe_fdc (
 	.rt_restart   ( hfe_rt_restart    )
 );
 
-// drive B: is left out of the Tang Nano 20K HFE build to make room: drive A:
-// takes .st (here) or .hfe (the HFE path); selecting B: finds no drive.
+// fdc1772 serves drive A: only (.st); its second drive does not fit the
+// Tang Nano 20K with the HFE path. B: takes HFE images (the HFE path).
 fdc1772 #(.FD_NUM(1)) fdc1772 (
 	.clkcpu         ( clk_32           ), // system cpu clock.
 	.clk8m_en       ( mhz8_en1         ),

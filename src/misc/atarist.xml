@@ -81,6 +81,7 @@
     </menu>
     <menu label="Storage">
       <fileselector label="Disk A:" ext="st;hfe" index="0" default="disk_a.st"/>
+      <fileselector label="Disk B:" ext="hfe" index="1" default="disk_b.hfe"/>
       <fileselector label="ACSI #0:" ext="hd;img" index="2" default="acsi_0.hd"/>
       <fileselector label="ACSI #1:" ext="hd;img" index="3" default="acsi_1.hd"/>
       <list label="Disk prot.:" id="P" default="0">

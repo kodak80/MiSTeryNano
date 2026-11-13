@@ -15,9 +15,8 @@
 //   - index pulses: every revolution, including those across seeks and
 //     loads, within 5% of the track's own revolution
 //   - side switch in the middle of a READ ADDRESS
-// The HFE path serves drive A: only (as in the core): a second HFE in
-// drive B must not be taken nor read, and A: must still read after B: was
-// selected; a non-HFE image must not become an HFE drive.
+// A second HFE goes into drive B (reads from it, then from A again); a
+// non-HFE image must not become an HFE drive.
 
 #include <cstdio>
 #include <cstdlib>
@@ -402,31 +401,38 @@ int main(int argc, char **argv) {
     }
   }
 
-  // drive B: the HFE path serves drive A: only, so an HFE image in B: is not
-  // taken (fdc1772 serves B: in the core), and A: keeps working
+  // drive B: another HFE, then back to A
   if (argi + 1 < argc && only_t < 0) {
     const char *nb = base(argv[argi + 1]);
-    if (load_file(argv[argi + 1], sim.file[1])) {
+    Hfe hb;
+    std::vector<uint8_t> raw;
+    if (hb.load(argv[argi + 1]) && load_file(argv[argi + 1], sim.file[1])) {
       t = 0; s = 0;
-      long b0 = sim.blocks_b;
-      if (sim.mount(1, 32000 * 50)) FAILF("drive B (%s) became an HFE drive", nb);
-      if (sim.blocks_b != b0) FAILF("drive B (%s): %ld SD blocks read for it", nb, sim.blocks_b - b0);
-      sim.top->floppy_drive = 1;   // select drive B for a while
-      sim.ticks(32000 * 100);
-      sim.top->floppy_drive = 2;   // back to A: restore, as software would
+      if (!sim.mount(1)) FAILF("drive B (%s) did not become an HFE drive", nb);
+      sim.top->floppy_drive = 1;   // drive B
       sim.top->side = 0;
       sim.command(0x08);
-      SideModel ma = model_side(h, 0, 0);
-      bool ra_ok = false;
+      SideModel mb = model_side(hb, 0, 0), ma = model_side(h, 0, 0);
+      Sim::Run r;
+      bool rb_ok = false, ra_ok = false;
+      for (auto &f : mb.fl)
+        if (f.id_crc_ok && f.dam >= 0) {
+          sim.write(1, f.trk); sim.write(2, f.sec);
+          r = sim.command(0x88);
+          rb_ok = !r.timeout && match_sector(mb, f.trk, f.sec, r);
+          break;
+        }
+      sim.top->floppy_drive = 2;   // back to A: its head is still where it was,
+      sim.command(0x08);            // so restore, as software would
       for (auto &f : ma.fl)
         if (f.id_crc_ok && f.dam >= 0) {
           sim.write(1, f.trk); sim.write(2, f.sec);
-          Sim::Run r = sim.command(0x88);
+          r = sim.command(0x88);
           ra_ok = !r.timeout && match_sector(ma, f.trk, f.sec, r);
           break;
         }
-      if (!ma.fl.empty() && !ra_ok) FAILF("drive A after selecting B: read FAILED");
-      else if (!quiet) printf("ok   %s in drive B is not taken as HFE, drive A still reads\n", nb);
+      if (!rb_ok || !ra_ok) FAILF("two drives: read from B %s, then from A %s", rb_ok ? "ok" : "FAILED", ra_ok ? "ok" : "FAILED");
+      else if (!quiet) printf("ok   drive B (%s) read, then drive A again\n", nb);
     }
     // a non-HFE image does not become an HFE drive
     if (argi + 2 < argc && load_file(argv[argi + 2], sim.file[1])) {

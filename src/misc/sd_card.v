@@ -121,8 +121,8 @@ reg [31:0] direct_start [4];
 // The HFE loader in the core can take direct access: it reads whole 512
 // byte blocks and drops its request at the acknowledge. fdc1772 still goes
 // through the MCU, so direct_floppy is only set while the HFE loader is
-// the one asking.
-wire	   direct_enable = ((drive == 2) || (drive == 3) || (drive == 0 && direct_floppy)) &&
+// the one asking (for drive A: or B:).
+wire	   direct_enable = ((drive == 2) || (drive == 3) || (drive <= 1 && direct_floppy)) &&
 			   direct_start[drive] != 32'd0;   
 
 // interrupt handling

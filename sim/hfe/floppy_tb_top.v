@@ -41,21 +41,17 @@ wire ce8 = phase == 2'd3;
 
 wire step_pulse, step_out, dr_present, dr_track0, flux;
 
-// as in the core: the HFE path serves drive A: only
-assign hfe_valid[1] = 1'b0;
-assign sd_rd[1]     = 1'b0;
-
-hfe_floppy #(.FD_NUM(1)) floppy (
+hfe_floppy #(.FD_NUM(2)) floppy (
 	.clk            ( clk            ),
 	.clk8m_en       ( ce8            ),
 	.reset          ( reset          ),
-	.floppy_drive   ( floppy_drive[0] ),
+	.floppy_drive   ( floppy_drive   ),
 	.side           ( side           ),
-	.img_mounted    ( img_mounted[0] ),
+	.img_mounted    ( img_mounted    ),
 	.img_size       ( img_size       ),
-	.hfe_valid      ( hfe_valid[0]   ),
+	.hfe_valid      ( hfe_valid      ),
 	.sd_lba         ( sd_lba         ),
-	.sd_rd          ( sd_rd[0]       ),
+	.sd_rd          ( sd_rd          ),
 	.sd_ack         ( sd_ack         ),
 	.sd_buff_addr   ( sd_buff_addr   ),
 	.sd_dout        ( sd_dout        ),
