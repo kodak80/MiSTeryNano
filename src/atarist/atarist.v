@@ -37,6 +37,7 @@ module atarist (
 	input [7:0] 	   sd_dout,
 	output [7:0] 	   sd_din,
 	input 			   sd_dout_strobe,
+	output 			   sd_direct_floppy, // the HFE loader is reading: drive 0 may use direct SD access
 
 	// generic sd card services
 	input [3:0] 	   sd_img_mounted,
@@ -974,6 +975,7 @@ end
 assign sd_rd     = hfe_sd_rd | (hfe_sd_busy ? 2'b00 : st_sd_rd);
 assign sd_wr     = hfe_sd_busy ? 2'b00 : st_sd_wr;
 assign sd_lba    = hfe_sd_busy ? hfe_sd_lba : st_sd_lba;
+assign sd_direct_floppy = hfe_sd_busy;
 wire   st_sd_ack = sd_ack && !hfe_sd_busy;
 
 wire        hfe_step, hfe_step_out, hfe_present, hfe_track0, hfe_index, hfe_flux;

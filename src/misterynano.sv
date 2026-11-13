@@ -476,6 +476,8 @@ wire [7:0] acsi_sd_wr_byte;
 wire [8:0] acsi_sd_byte_addr = sd_byte_index;
 `endif
    
+wire sd_direct_floppy;
+
 atarist atarist (
     .clk_32(clk32),
     .resb(!system_reset[0] && !reset && !por && ram_ready && flash_ready && sd_ready),       // user reset button
@@ -558,6 +560,7 @@ atarist atarist (
 	.sd_dout        ( sd_rd_data ),
 	.sd_din         ( sd_wr_data ),
     .sd_dout_strobe ( sd_rd_byte_strobe ),
+    .sd_direct_floppy ( sd_direct_floppy ),
 
     // interface to ROM
     .rom_n(rom_n),
@@ -735,6 +738,7 @@ sd_card #(
     .inbyte(is_acsi?acsi_sd_wr_byte:sd_wr_data),
 `endif
 
+    .direct_floppy(sd_direct_floppy),
     .rbusy(sd_busy),
     .rdone(sd_done),
 		   

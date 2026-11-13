@@ -53,6 +53,7 @@ module sd_card # (
     // MCU interface as the MCU translates sector numbers from those
     // the core tries to use to physical ones inside the file system
     // of the sd card
+    input			  direct_floppy, // drive 0 may use direct access (the HFE loader is reading)
     input [3:0]		  rstart, // up to four different sources can request data 
     input [3:0]		  wstart, 
     input [31:0]	  rsector,
@@ -117,7 +118,12 @@ wire [2:0] drive =
 // TODO: For unknown reason, direct IO does not work with the floppy. It
 // causes broken data and sporadic resets (may be due to broken data)
 reg [31:0] direct_start [4];   
-wire	   direct_enable = ((drive == 2) || (drive == 3)) && direct_start[drive] != 32'd0;   
+// The HFE loader in the core can take direct access: it reads whole 512
+// byte blocks and drops its request at the acknowledge. fdc1772 still goes
+// through the MCU, so direct_floppy is only set while the HFE loader is
+// the one asking.
+wire	   direct_enable = ((drive == 2) || (drive == 3) || (drive == 0 && direct_floppy)) &&
+			   direct_start[drive] != 32'd0;   
 
 // interrupt handling
 wire rstart_any = {|{rstart}};

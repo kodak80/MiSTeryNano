@@ -735,6 +735,7 @@ sd_card #(
     .inbyte(is_acsi?acsi_sd_wr_byte:sd_wr_data),
 `endif
 
+    .direct_floppy(1'b0),
     .rbusy(sd_busy),
     .rdone(sd_done),
 		   
