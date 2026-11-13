@@ -110,9 +110,10 @@ using a [Linux PC](INSTALLATION_LINUX.md) or a [Windows PC](INSTALLATION_WINDOWS
 
 See the [trouble shooting guide](TROUBLESHOOTING.md) if you run into problems.
 
-Copy protected disks can be used as HFE images (v1 and v3) in drive A:, see
-[HFE floppy images](HFE.md). To make room for it this build has no drive B:
-and no Cubase dongles; the page lists what has been tested and how to build.
+Copy protected disks can be used as HFE images (v1 and v3) in drives A: and
+B:, see [HFE floppy images](HFE.md). To make room for it B: takes HFE images
+only and there are no Cubase dongles; the page lists what has been tested
+and how to build.
 
 ## Wiring
 

@@ -6,15 +6,18 @@ fuzzy (weak) bits, sectors written at a different speed, extra or
 missing sectors, unformatted tracks and the like are all played back as
 they are on the disk.
 
-This is the `hfev3-fdc-v1.2.10` branch: MiSTeryNano v1.2.10 for the Tang
-Nano 20K with the HFE drive added.
+This is the `hfe-drive-b` branch: `hfev3-fdc-v1.2.10` (MiSTeryNano v1.2.10
+for the Tang Nano 20K with the HFE drive) with drive B: back as a second
+HFE drive.
 
 ## Use
 
 Select an `.hfe` file for Disk A: in the menu, as you would an `.st`, and
 reset if the disk boots. The core looks at the file itself: a file with
 the HFE signature goes through the HFE floppy path, anything else through
-the existing `.st` floppy.
+the existing `.st` floppy. Disk B: takes `.hfe` images only (convert an
+`.st` with `tools/hfev3/st2hfe.py`, it then reads exactly like the `.st`);
+without one, B: is a drive without a disk.
 
 - To change disks, select the next one for Disk A:. The drive reports the
   change the way a real one does (the write protect signal changes for a
@@ -38,9 +41,11 @@ from the core.
 The HFE path and the `.st` floppy together do not fit the Tang Nano 20K
 with everything else, so this build leaves out:
 
-- **Drive B:.** Selecting B: finds a drive without a disk (TOS boots as
-  quickly as before). The menu has no Disk B: entry and Disk prot. offers
-  None or A:.
+- **`.st` images in drive B:.** The `.st` floppy serves A: only; its
+  second drive does not fit. B: is a second HFE drive instead: both
+  drives share the HFE track buffer, player and controller (only the
+  selected drive's track is loaded), so it costs a few registers and a
+  second track table. Disk prot. offers None or A:.
 - **The Cubase 2/3 dongles.** The cartridge port reads $FF. Build with
   `CUBASE_DONGLE` defined to have them back.
 
@@ -72,7 +77,8 @@ SD card -> track loader -> track player -> flux -> WD1772 data separator
 ```
 
 - The track the head is on is loaded from the SD card into a 48 KB buffer
-  (both sides), on every step and when a disk is inserted. It is read
+  (both sides) for the selected drive, on every step, when the other drive
+  is selected and when a disk is inserted. It is read
   straight from the card when the image is contiguous.
 - A loaded track starts playing at once, brought round to where the disk
   is (it plays from the index at 16 times the speed, unseen, until it has
@@ -89,7 +95,7 @@ SD card -> track loader -> track player -> flux -> WD1772 data separator
 
 - Read only: the disk is write protected and writes are refused. Saving
   to an HFE disk is not possible yet; for saves, swap an `.st` into A:.
-- One drive (A:) only.
+- `.st` images in A: only; B: takes HFE images.
 - After a step the new track is loaded first (a few milliseconds from a
   contiguous image, tens through the MCU), a little longer than a real
   drive's head settling time.
