@@ -61,7 +61,7 @@ Companion, TOS 1.04, 4 MB:
 | Lemmings | v3 | loads and plays (to level 7 so far) |
 | R-Type, disks 1 and 2 | v3 | loads, disk change works |
 | Pushover, disks 1 and 2 | v3 | loads, disk change works |
-| The Chaos Engine, disk 1 | v3 | loads (without ACSI hard disk, see above) |
+| The Chaos Engine, disks 1 and 2 | v3 / v1 | loads (without ACSI hard disk, see above), disk 2 read from B: |
 | Toki | v3 | loads |
 | Total Recall | v3 | loads |
 | Magic Pockets | v1 | loads |
