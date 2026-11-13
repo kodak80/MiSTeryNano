@@ -93,7 +93,7 @@ after B: was selected, and that a non-HFE image is not taken as HFE.
   signature, so an `.st` is left alone). Drive side: `floppy_drive`
   (active low), `side` (the head, 1 = side 1), the controller's step
   pulses; gives `dr_present`, `dr_track0`, `dr_index` and `flux`. One raw
-  track buffer (`BUF_BYTES`, 40 KB) for the selected drive, both sides,
+  track buffer (`BUF_BYTES`, 48 KB) for the selected drive, both sides,
   so side changes are immediate; a track loads on every step, drive
   change or mount. Index pulses never stop: they are kept from the last
   revolution while nothing plays. A newly loaded track starts at once

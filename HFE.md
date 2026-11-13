@@ -71,7 +71,7 @@ SD card -> track loader -> track player -> flux -> WD1772 data separator
         -> address mark detector -> WD1772 commands -> ST
 ```
 
-- The track the head is on is loaded from the SD card into a 40 KB buffer
+- The track the head is on is loaded from the SD card into a 48 KB buffer
   (both sides), on every step and when a disk is inserted. It is read
   straight from the card when the image is contiguous.
 - A loaded track starts playing at once, brought round to where the disk

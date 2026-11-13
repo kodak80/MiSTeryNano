@@ -57,7 +57,7 @@
 
 module hfe_floppy #(
 	parameter FD_NUM    = 2,
-	parameter BUF_BYTES = 40960      // raw track buffer (largest track seen: 40,298);
+	parameter BUF_BYTES = 49152      // raw track buffer (largest track seen: 48,846, Pushover);
 	                                 // 32 KB + a power of two (32K + 8K, 16K, ...)
 ) (
 	input                   clk,           // 32 MHz
