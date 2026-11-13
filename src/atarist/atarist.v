@@ -934,6 +934,18 @@ wire [1:0]  hfe_valid;
 // without a disk, as a missing B: did before (TOS restores B: at boot and
 // waits seconds for a controller that never answers), the HFE controller
 // serves B: as an empty drive: head at track 0, index pulses, no data.
+// A disk change in A: flips the write protect signal for a second, as the
+// drive's sensor does while a disk goes out and the next one goes in. TOS
+// (and games loading through it) learn of a new disk from that change; a
+// read-only HFE disk is otherwise write protected all the time, so a swap
+// went unnoticed when the disks had the same boot sector serial number
+// (The Chaos Engine disk 2 was "not seen").
+reg  [24:0] disk_chg_cnt = 25'd0;
+wire        disk_chg = disk_chg_cnt != 25'd0;
+always @(posedge clk_32)
+	if (sd_img_mounted[0])  disk_chg_cnt <= 25'd32_000_000;   // 1 s
+	else if (disk_chg)      disk_chg_cnt <= disk_chg_cnt - 25'd1;
+
 wire        a_sel = ~floppy_sel_exclusive[0];
 wire        b_sel = ~floppy_sel_exclusive[1];
 wire        hfe_active = (a_sel & hfe_valid[0]) | b_sel;
@@ -1066,7 +1078,7 @@ wd1772_mfm hfe_fdc (
 	.irq          ( hfe_fdc_irq       ),
 	.drq          ( hfe_fdc_drq       ),
 	.dr_present   ( hfe_present & a_sel ),
-	.dr_wp        ( 1'b1              ),   // read only for now
+	.dr_wp        ( !disk_chg         ),   // read only (writes are refused)
 	.dr_index     ( hfe_index         ),
 	.dr_track0    ( a_sel ? hfe_track0 : 1'b1 ),
 	.step_pulse   ( hfe_step          ),
@@ -1108,7 +1120,7 @@ fdc1772 #(.FD_NUM(1)) fdc1772 (
 	// place any signals that need to be passed up to the top after here.
 	.img_ds         ( 1'b0                ), // "double sided" image. Unused in ST
 	.img_type       ( 3'd1                ), // Atari ST floppy type
-	.img_wp         ( floppy_protected[0] ), // write protect
+	.img_wp         ( floppy_protected[0] ^ disk_chg ), // write protect
 	.img_mounted    ( sd_img_mounted[0]   ), // signaling that new image has been mounted
 	.img_size       ( sd_img_size[31:0]   ), // size of image in bytes, 737280 for 80 tracks, 9 spt double sided
 
