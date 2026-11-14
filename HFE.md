@@ -54,18 +54,15 @@ ACSI hard disks, the Mega ST (blitter) and the STE modes are all kept.
 ## Tested
 
 On a Tang Nano 20K with a MiSTeryShield20k and a Pico running FPGA
-Companion, TOS 1.04, 4 MB:
+Companion, TOS 1.04, 4 MB, HFE v1 and v3 images in general load and play
+in A:. A few that showed something worth knowing:
 
-| Image | HFE | Result |
-|---|---|---|
-| Lemmings | v3 | loads and plays (to level 7 so far) |
-| R-Type, disks 1 and 2 | v3 | loads, disk change works |
-| Pushover, disks 1 and 2 | v3 | loads, disk change works |
-| The Chaos Engine, disks 1 and 2 | v3 / v1 | loads (without ACSI hard disk, see above), disk 2 read from B: |
-| Toki | v3 | loads |
-| Total Recall | v3 | loads |
-| Magic Pockets | v1 | loads |
-| Dungeon Master | v1 | loads into the dungeon |
+- Lemmings times its disk access closely: it needs the image contiguous
+  on the SD card (see above).
+- Pushover has tracks of nearly 48 KB, the size of the track buffer.
+- The Chaos Engine and Pushover start from an `AUTO` folder: no ACSI hard
+  disk, or A: is not the boot drive (see above).
+- The Chaos Engine reads disk 2 from B: when it is there.
 
 ## What it does
 
